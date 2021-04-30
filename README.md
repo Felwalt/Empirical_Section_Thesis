@@ -1,5 +1,4 @@
 # Empirical_Section_Thesis
-Data-file and R-code of empirical section Master thesis:
 
 This repository entails supplementary material to the Master thesis of Felix Walthes:
 
