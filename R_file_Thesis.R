@@ -2,6 +2,7 @@
 install.packages("huxtable")
 install.packages("flextable", type = "binary")
 install.packages("table1")
+install.packages("dplyr")
 
 
 library ("jtools")
@@ -10,9 +11,10 @@ library("table1")
 library("dplyr")
 
 
-## The Data is prepared for analyis in excel, thus for analyisis in R import the excel sheet "Import to R"
+## The Data is prepared for analyis in the excel Raw_data_Thesis. For analyisis in R the excel sheet "Import to R" has to be imported. 
 
-# Remove duplicates and responses that were made too fast and one outlier by using the indicator variable "cleaned"
+# In a first step, the binary variable "Cleaned" indicates, which variables are to be removed from the full data-set. 
+# Duplicate answers, one outlier, and participants who took less than 5 seconds for the insurance task were removed. 
 
 Raw_data_full <- Raw_data_Thesis
 Raw_data_cleaned <- subset(Raw_data_full, Cleaned == 0)
@@ -27,7 +29,11 @@ Raw_data_cleaned$Ov <- ifelse(Raw_data_cleaned$Overc > 2,  1, 0)
 Cond_data_cleaned = subset(Raw_data_cleaned, Cond == 1)
 standard_data_cleaned = subset(Raw_data_cleaned, Cond == 0)
 
-## Table 7 in thesis: summary statistics (mannually transferred in format of thesis based on output below)
+## Table 7 in the thesis entails summary statistics of the data set as well as a balance check between groups. 
+## The code below generates the statistics and was manually transferred in the formmat of the thesis.
+
+# The order of the colummns is adapted in written Master thesis. 
+# Note that, compared to table 7 in the thesis, in the R output below Column 1 = SI, Column 3 = SU, Column 2 = CI, Column 4 = CU.
 
 table1::label(Raw_data_cleaned$RiskQ) <- "RiskQ"
 table1::label(Raw_data_cleaned$ProbQ) <- "ProbQ"
@@ -37,13 +43,10 @@ table1::label(Raw_data_cleaned$Estim) <- "Estim"
 table1::label(Raw_data_cleaned$Overc) <- "Overc"
 table1::label(Raw_data_cleaned$Take) <- "Take"
 
-# The code below generates a table output that is used for table 7 in thesis
-# The order of the colummns is adapted in written Master thesis. In the R output compared to table 7, Column 1 = SI, Column 3 = SU, Column 2 = CI, Column 4 = CU 
-
 Descriptive_stats = table1::table1(~RiskQ + ProbQ + InsQ + Estim + Risk + Overc + Take | Group, data = Raw_data_cleaned)
 Descriptive_stats
 
-# Table 7 involves a balance check, the code below conducts the respective t-tests between groups
+## Table 7 involves a balance check, the code below conducts the respective t-tests between groups
 # Separate data into the 4 groups for t-tests
 
 Group_1M = subset(Raw_data_cleaned, Group == 1)
