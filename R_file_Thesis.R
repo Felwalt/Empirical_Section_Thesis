@@ -46,7 +46,7 @@ table1::label(Raw_data_cleaned$Take) <- "Take"
 Descriptive_stats = table1::table1(~RiskQ + ProbQ + InsQ + Estim + Risk + Overc + Take | Group, data = Raw_data_cleaned)
 Descriptive_stats
 
-## Table 7 involves a balance check, the code below conducts the respective t-tests between groups
+# Table 7 involves a balance check. The code below conducts the respective t-tests between groups.
 # Separate data into the 4 groups for t-tests
 
 Group_1M = subset(Raw_data_cleaned, Group == 1)
@@ -93,53 +93,59 @@ collect
 ## Table 8: Hypothesis 1 regression outputs (2 OLS  and 2 Probits)
 # Table 8 entails 4 regressions that are run with and without covariates and for the standard and conditional insurance contracts.
 
+# Run the regressions and store output
+
 regr1 = lm(Take ~ Overc + Info + Info:Overc, standard_data_cleaned)
 regr2 = lm(Take ~ RiskQ + ProbQ + InsQ + Risk + Overc + Info + Info:Overc, standard_data_cleaned)
 regr3 = glm(Take ~ Overc + Info + Info:Overc, standard_data_cleaned, family = binomial(link = "probit"))
 regr4 = glm(Take ~ RiskQ + ProbQ + InsQ + Risk + Overc + Info + Info:Overc, standard_data_cleaned, family = binomial(link = "probit"))
 
-# A screenshot was taken from html output that was produced by the function export_summs
+# The table in the thesis is a screenshot from the html output produced by the function export_summs.
 
 export_summs(regr1,regr2, regr3,regr4, to.file = "html",  model.names = c("LPM (1)","LPM (2)", "Probit (1)","Probit (2)"), robust ="HC0", digits = 3, statistics = c(N = "nobs", R2 = "r.squared", `Pseudo R2` = "pseudo.r.squared"), error_pos = c( "right"),   model.info = getOption("summ-model.info", TRUE))
 
 ## Figure 2 computations
-# Marginal effect for Probit 
-# predict non-treatment probability for differing overconfidence scores and convert probabilities to z-score 
+# The marginal effect of treatment for the Probit estimator is computed. 
+# In a first step, the non-treatment probability of insurance participation for differing overconfidence scores is estimated and converted to a z-score.
 
 predictions = predict(regr4, newdata = data.frame(RiskQ = mean(standard_data_cleaned$RiskQ),ProbQ = mean(standard_data_cleaned$ProbQ), InsQ = mean(standard_data_cleaned$InsQ), Risk = mean(standard_data_cleaned$Risk), Info = c(0),Overc = c(-5:5)), type ="response")
 
 zscore = qnorm(predictions)
 
-# Predict treatment probability
+# In a second step, the probability of participation for the treatment group is estimated.
+# For this, the estimamted treatment effect is added to the z-score of non-treatment. Here, only the coefficient of the interaction term is significant. 
 
-# add treatment effect to z-score of non-treatment --> only the coefficient of the interaction term is significant. 
-# The predicted probability of participation in the treatmment group can be computed by: zscore (non-treatment) + Overc*0.212
+# extract the coefficients from the Probit output with covariates
 
 coefficients_probit = as.data.frame(regr4$coefficients)
 
-# compute probability of choosing insurance for treatmment group 
+# The predicted probability of insurance participation in the treatmment group can be computed by adding the treatment effect to the non-treatment z-score.
+# The treatment effect is computed by variying the overconfidence variable from -5 to 5. 
+# Formally: zscore + Overc*0.212.
 
 treatment_predict = pnorm(zscore+(c(-5:5))*coefficients_probit[8,1])
 
-# compute marginal effect of treatment by taking the difference of predicted probability in treatment and control group
+# The  marginal effect of treatment is computed by taking the difference of predicted probability in treatment and control group.
 
 Marginal = cbind(treatment_predict) - cbind(predictions)
 
-# variable for differing overconfidence scores
+# The treatment effect of the linear model (OLS model) is directly interpretable from the significant coefficient of interaction term, hence the marginal effect of treatment 
+# can be computed by multiplying the coefficient with the overconfidence score.
+
+# Create variable for differing overconfidence scores.
 
 overc1 = c(-5:5)
 
-# treatment effect of linear model is directly interpretable from significant coefficient of interaction term, hence the marginal effect of treatment 
-# can be computed by multiplying the coefficient with the overconfidence score.
+# extract the coefficients from the Probit output with covariates.
 
 coefficients_linear = as.data.frame(regr2$coefficients)
-coefficients_linear
 
 # compute linear treatment effect 
 
 lin = overc1*coefficients_linear[8,1]
 
 ## Figure 2: Plot linear and Probit treatment effect
+# The treatment effects are plotted with overconfidence on the x-axis and the treatment effect on the y-axis
 
 plot(overc1, Marginal, type = "l", col = "red")
 lines(overc1, lin, type = "l", col = "green")
@@ -153,38 +159,41 @@ legend("topleft", legend=c("Marginal Effect Probit","Marginal Effect LPM"), lty=
 ## Table 9: Hypothesis 2 regression outputs (2 OLS  and 2 Probits)
 # Table 9 entails 4 regressions that are run with and without covariates and for the standard and conditional insurance contracts.
 
+# Run the regressions and store output
+
 regr1 = lm(Take ~ Overc + Info + Info:Overc, Cond_data_cleaned)
 regr2 = lm(Take ~ RiskQ + ProbQ + InsQ + Risk + Overc +  Info + Info:Overc, Cond_data_cleaned)
 regr3 = glm(Take ~ Overc + Info + Info:Overc, Cond_data_cleaned, family = binomial(link = "probit"))
 regr4 = glm(Take ~ RiskQ + ProbQ + InsQ + Risk + Overc +  Info + Info:Overc, Cond_data_cleaned, family = binomial(link = "probit"))
 
-# screenshot taken from html output that was produced by the function export_summs
+# The table in the thesis is a screenshot from the html output produced by the function export_summs.
 
 export_summs(regr1,regr2, regr3,regr4, to.file = "html",  model.names = c("LPM (1)","LPM (2)", "Probit (1)","Probit (2)"), robust ="HC0", digits = 3, statistics = c(N = "nobs", R2 = "r.squared", `Pseudo R2` = "pseudo.r.squared"), error_pos = c( "right"),   model.info = getOption("summ-model.info", TRUE))
 
 
 ## Table 10: Robustness tests (2 OLS with alternative specification and 2 OLS for reduced sample)
 # Table 10 entails 4 regressions that are run with covariates for the standard and conditional insurance contracts. 
-# Further, the regression are run for a random sub-sample and an alternative econometric specification. 
+# Further, the regressions are run for a random sub-sample and an alternative econometric specification.
 
-# alternative specification using underconfidence and overconfidence dummmies 
+# First, OLS regressions are computed with an alternative specification using underconfidence and overconfidence dummmies. 
+# Run the regressions and store output
 
 regr1 = lm(Take ~ Info*Un + Info*Ov + RiskQ + ProbQ + InsQ + Risk , standard_data_cleaned)
 regr2 = lm(Take ~ Info*Un + Info*Ov + RiskQ + ProbQ + InsQ + Risk, Cond_data_cleaned)
 
-
-# sub-sample of redcued sample
+# Seccond, a sub-sample of the redcued sample is taken (Note that, since the sub-sample produces a new sample each time the code is run, the results are different each time).
 
 Standard_data_sub = sample_n(standard_data_cleaned, 75, replace = FALSE, prob = NULL)
 Cond_data_sub = sample_n(Cond_data_cleaned, 75, replace = FALSE, prob = NULL)
 
-# Compute regression of reduced sample
+# Run the regressions for the sub-sample and store output
 
 regr3 = lm(Take ~ Overc + Info + Info:Overc + RiskQ + ProbQ + InsQ + Risk, Standard_data_sub)
 regr4 = lm(Take ~ Overc + Info + Info:Overc + RiskQ + ProbQ + InsQ + Risk, Cond_data_sub)
 
-export_summs(regr1,regr2,regr3, regr4, to.file = "html",  model.names = c("LPM standard alt","LPM conditional alt", "LPM standard sub", "LPM conditional sub"), robust ="HC0", digits = 3, statistics = c(N = "nobs", R2 = "r.squared"), error_pos = c( "right"))
+# The table in the thesis is a screenshot from the html output produced by the function export_summs.
 
+export_summs(regr1,regr2,regr3, regr4, to.file = "html",  model.names = c("LPM standard alt","LPM conditional alt", "LPM standard sub", "LPM conditional sub"), robust ="HC0", digits = 3, statistics = c(N = "nobs", R2 = "r.squared"), error_pos = c( "right"))
 
 ## Figure 1 computations 
 # In Figure 1 the willingness to pay for insurance is computed and plotted along-side the insurance premium of standard and conditional insurance contracts.
@@ -197,12 +206,12 @@ prob_vector <- cbind(1 - seq(1:20)/100)
 # loss state
 loss_prob <- 1 - prob_vector
 
-# compute premium for each contract
+# Compute insurance premium for each contract design. For the standard contract the premium is constant at 25 cents, while the conditional premium is proportional the loss probability.
 
 Conditional_premium = loss_prob*3.5*100
 Standard_premium = rep(25,20)
 
-# Compute Maximum willingness to pay for insurance for differing levels of the loss probability and CRRA utility
+# Compute the maximum willingness to pay for insurance for differing levels of the loss probability and CRRA utility function
 
 # compute the non-insurance utility for differing levels of the loss probability
 
@@ -216,7 +225,7 @@ CE = (Non_ins_Utility*(1-0.75))^(1/0.25)
 
 WTP = 100 - CE
 
-# Plot WTP and insurance premium vs. loss probability
+# In Figure 1, the WTP for insurance and the insurance premium for the conditional and standard contract are plotted against the loss probability.
 
 plot(loss_prob, WTP, xlab="Loss probability", ylab="WTP or Insurance Premium (in cents)", lty=1, type = "l", cex.axis=0.6, cex.lab = 0.8)
 lines(loss_prob, Conditional_premium, lty=2)
